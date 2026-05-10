@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>워드 타자 능력 평가 시스템</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --success: #059669;
+    --danger: #dc2626;
+    --warning: #d97706;
+    --purple: #7c3aed;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text: #1e293b;
+    --text-light: #64748b;
+    --border: #e2e8f0;
+    --radius: 12px;
+  }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ===================== LOGIN SCREEN ===================== */
+  .login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #2563eb 100%);
+  }
+  .login-container {
+    background: white;
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+  }
+  .login-container h1 { font-size: 26px; margin-bottom: 6px; }
+  .login-container .subtitle { color: var(--text-light); font-size: 14px; margin-bottom: 32px; }
+  .login-container .emoji-icon { font-size: 56px; margin-bottom: 16px; display: block; }
+
+  .role-buttons { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+  .role-btn {
+    padding: 18px 24px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s;
+    font-family: inherit;
+    text-align: left;
+  }
+  .role-btn:hover { border-color: var(--primary); background: #eff6ff; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37,99,235,0.15); }
+  .role-btn.selected { border-color: var(--primary); background: #eff6ff; }
+  .role-btn .role-icon { font-size: 32px; }
+  .role-btn .role-info h3 { font-size: 16px; margin-bottom: 2px; }
+  .role-btn .role-info p { font-size: 12px; color: var(--text-light); }
+
+  .admin-pw-section { display: none; margin-top: 16px; }
+  .admin-pw-section.show { display: block; }
+  .admin-pw-section input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .admin-pw-section input:focus { outline: none; border-color: var(--primary); }
+
+  .login-enter-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+  }
+  .login-enter-btn:hover { background: var(--primary-dark); }
+  .login-enter-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+  .login-error { color: var(--danger); font-size: 13px; margin-top: 8px; display: none; }
+  .login-error.show { display: block; }
+
+  /* ===================== SCREENS ===================== */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: block; }
+
+  /* ===================== HEADER ===================== */
+  .header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: white;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .header h1 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .header-admin { background: linear-gradient(135deg, #4a1d96 0%, #7c3aed 100%); }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .header-tag {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .tag-admin { background: rgba(255,255,255,0.2); color: white; }
+  .tag-student { background: rgba(255,255,255,0.2); color: white; }
+
+  /* ===================== BTN ===================== */
+  .btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-start { background: #22c55e; color: white; box-shadow: 0 2px 8px rgba(34,197,94,0.4); }
+  .btn-start:hover { background: #16a34a; }
+  .btn-stop { background: #ef4444; color: white; }
+  .btn-stop:hover { background: #dc2626; }
+  .btn-reset { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); }
+  .btn-reset:hover { background: rgba(255,255,255,0.3); }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-purple { background: var(--purple); color: white; }
+  .btn-purple:hover { background: #6d28d9; }
+  .btn-outline { background: white; color: var(--text); border: 2px solid var(--border); }
+  .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-logout { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.3); font-size: 13px; padding: 6px 14px; }
+
+  /* ===================== ADMIN SCREEN ===================== */
+  .admin-body { display: flex; height: calc(100vh - 52px); }
+  .admin-sidebar {
+    width: 220px;
+    background: #1e1b3a;
+    color: white;
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .admin-nav-item {
+    padding: 12px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s;
+    border-left: 3px solid transparent;
+  }
+  .admin-nav-item:hover { background: rgba(255,255,255,0.08); }
+  .admin-nav-item.active { background: rgba(124,58,237,0.3); border-left-color: #a78bfa; color: #a78bfa; font-weight: 600; }
+  .admin-content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  .admin-tab { display: none; }
+  .admin-tab.active { display: block; }
+
+  /* Settings Tab */
+  .settings-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .settings-card h3 { font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
+  .form-group textarea {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 2;
+    resize: vertical;
+    min-height: 250px;
+  }
+  .form-row { display: flex; gap: 16px; }
+  .form-row .form-group { flex: 1; }
+  .char-counter { text-align: right; font-size: 12px; color: var(--text-light); margin-top: 4px; }
+  .save-notice {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    display: none;
+    margin-top: 12px;
+    animation: fadeIn 0.3s;
+  }
+  .save-notice.show { display: block; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .preset-buttons { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .preset-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: white;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .preset-btn:hover { border-color: var(--purple); color: var(--purple); background: #f5f3ff; }
+  .preset-btn.custom-preset { border-color: #059669; background: #ecfdf5; color: #059669; }
+  .preset-btn.custom-preset:hover { background: #d1fae5; }
+
+  /* Custom presets list */
+  .custom-presets-area { margin-top: 8px; }
+  .custom-preset-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px 4px 14px;
+    border: 1px solid #059669;
+    border-radius: 20px;
+    background: #ecfdf5;
+    color: #059669;
+    font-size: 12px;
+    margin: 0 6px 6px 0;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .custom-preset-item:hover { background: #d1fae5; }
+  .custom-preset-item .delete-preset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: #dc2626;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: bold;
+    line-height: 1;
+    padding: 0;
+    margin-left: 2px;
+  }
+  .custom-preset-item .delete-preset:hover { background: #fee2e2; }
+
+  /* Save as preset section */
+  .save-as-preset-section {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #f0fdf4;
+    border-radius: 8px;
+    border: 1px dashed #059669;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .save-as-preset-section span { font-size: 12px; color: #059669; font-weight: 600; }
+
+  /* Dashboard Tab */
+  .dash-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .dash-stat-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .dash-stat-card .ds-label { font-size: 12px; color: var(--text-light); font-weight: 500; }
+  .dash-stat-card .ds-value { font-size: 32px; font-weight: 800; margin-top: 4px; }
+  .dash-stat-card .ds-sub { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .ds-primary .ds-value { color: var(--primary); }
+  .ds-success .ds-value { color: var(--success); }
+  .ds-warning .ds-value { color: var(--warning); }
+  .ds-danger .ds-value { color: var(--danger); }
+
+  .results-table-container {
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .results-table-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .results-table-header h3 { font-size: 15px; }
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .results-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: #f8fafc;
+    font-weight: 600;
+    color: var(--text-light);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  .results-table th:hover { color: var(--primary); }
+  .results-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  .results-table tr:hover td { background: #f8fafc; }
+  .results-table .num { text-align: right; }
+  .grade-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .grade-S { background: #fef3c7; color: #b45309; }
+  .grade-A { background: #dcfce7; color: #15803d; }
+  .grade-B { background: #dbeafe; color: #1d4ed8; }
+  .grade-C { background: #fce7f3; color: #be185d; }
+  .grade-D { background: #fee2e2; color: #dc2626; }
+  .no-data {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-light);
+    font-size: 14px;
+  }
+  .no-data .nd-icon { font-size: 48px; margin-bottom: 8px; display: block; }
+  .rank-1 { color: #b45309; font-weight: 800; }
+  .rank-2 { color: var(--text-light); font-weight: 700; }
+  .rank-3 { color: #b45309; font-weight: 700; }
+
+  /* Student detail modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 16px;
+    width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: modalIn 0.3s ease-out;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: white;
+    padding: 24px 28px;
+    border-radius: 16px 16px 0 0;
+  }
+  .modal-header h2 { font-size: 20px; margin-bottom: 4px; }
+  .modal-header p { font-size: 13px; opacity: 0.8; }
+  .modal-body { padding: 24px 28px; }
+  .modal-footer {
+    padding: 16px 28px 24px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+  .score-total {
+    text-align: center;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border-radius: 12px;
+  }
+  .score-total .label { font-size: 14px; color: var(--text-light); margin-bottom: 4px; }
+  .score-total .score { font-size: 56px; font-weight: 800; color: var(--primary); line-height: 1.1; }
+  .score-total .max { font-size: 20px; color: var(--text-light); font-weight: 600; }
+  .score-grade {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .score-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .score-card {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 16px;
+    border-left: 4px solid var(--border);
+  }
+  .score-card .card-label { font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-weight: 500; }
+  .score-card .card-value { font-size: 24px; font-weight: 700; }
+  .score-card .card-sub { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+  .score-card.accuracy { border-left-color: var(--success); }
+  .score-card.accuracy .card-value { color: var(--success); }
+  .score-card.speed { border-left-color: var(--primary); }
+  .score-card.speed .card-value { color: var(--primary); }
+  .score-card.spacing { border-left-color: var(--warning); }
+  .score-card.spacing .card-value { color: var(--warning); }
+  .score-card.typo { border-left-color: var(--danger); }
+  .score-card.typo .card-value { color: var(--danger); }
+  .score-bar-item {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px;
+  }
+  .score-bar-label { width: 80px; text-align: right; color: var(--text-light); font-weight: 500; }
+  .score-bar-track { flex: 1; height: 20px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
+  .score-bar-fill {
+    height: 100%; border-radius: 10px; transition: width 1s ease-out;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 8px; font-size: 11px; font-weight: 700; color: white; min-width: 36px;
+  }
+  .comparison-section {
+    background: #f8fafc; border-radius: 10px; padding: 16px;
+    max-height: 200px; overflow-y: auto; font-size: 14px; line-height: 1.8;
+  }
+  .char-correct { color: var(--success); }
+  .char-wrong { color: white; background: #ef4444; border-radius: 2px; padding: 0 1px; }
+  .char-missing { color: #94a3b8; background: #fee2e2; border-radius: 2px; padding: 0 1px; }
+  .char-extra { color: white; background: var(--purple); border-radius: 2px; padding: 0 1px; }
+
+  /* ===================== STUDENT SCREEN ===================== */
+  .student-info-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .student-info-bar input {
+    padding: 5px 10px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    font-size: 13px;
+    width: 64px;
+    text-align: center;
+    font-family: inherit;
+  }
+  .student-info-bar input.name-input { width: 88px; text-align: left; }
+  .student-info-bar input::placeholder { color: rgba(255,255,255,0.5); }
+  .student-info-bar input:focus { outline: none; border-color: white; background: rgba(255,255,255,0.25); }
+
+  .timer-section { display: flex; align-items: center; gap: 10px; }
+  .timer-display {
+    font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums;
+    min-width: 80px; text-align: center; letter-spacing: 1px;
+  }
+  .timer-display.warning { color: #fbbf24; animation: pulse 1s infinite; }
+  .timer-display.danger { color: #f87171; animation: pulse 0.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+  .main-container { display: flex; height: calc(100vh - 52px); }
+  .panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .panel-header {
+    padding: 10px 20px;
+    background: var(--card-bg);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-header h2 { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .panel-badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+  .left-panel { border-right: 3px solid var(--primary); }
+  .left-panel .panel-header { background: #eff6ff; }
+  .left-panel .panel-badge { background: #dbeafe; color: var(--primary); }
+  .right-panel .panel-header { background: #f0fdf4; }
+  .right-panel .panel-badge { background: #dcfce7; color: var(--success); }
+
+  .reference-text {
+    flex: 1; padding: 24px; overflow-y: auto;
+    font-size: 17px; line-height: 2.2; letter-spacing: 0.3px; background: #fafbff;
+    white-space: pre-wrap;
+  }
+  .typing-area { flex: 1; padding: 16px; display: flex; flex-direction: column; }
+  .typing-area textarea {
+    flex: 1; width: 100%; border: 2px solid var(--border); border-radius: 10px;
+    padding: 20px; font-size: 17px; line-height: 2.2; letter-spacing: 0.3px;
+    resize: none; font-family: inherit; color: var(--text); background: white; transition: border-color 0.3s;
+  }
+  .typing-area textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  .typing-area textarea:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+  .typing-area textarea.active-typing { border-color: var(--success); box-shadow: 0 0 0 3px rgba(5,150,105,0.1); }
+
+  .live-stats { display: flex; gap: 14px; padding: 8px 0; flex-wrap: wrap; }
+  .live-stat { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-light); }
+  .live-stat strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+  .status-bar {
+    padding: 5px 20px; background: #1e293b; color: #94a3b8; font-size: 11px;
+    display: flex; justify-content: space-between;
+  }
+
+  /* Submitted overlay */
+  .submitted-overlay {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.95);
+    z-index: 10;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 12px;
+    border-radius: 10px;
+  }
+  .submitted-overlay.show { display: flex; }
+  .submitted-overlay .check-icon { font-size: 64px; }
+  .submitted-overlay .sub-text { font-size: 20px; font-weight: 700; color: var(--success); }
+  .submitted-overlay .sub-detail { font-size: 14px; color: var(--text-light); }
+
+  .typing-wrapper { flex: 1; position: relative; display: flex; flex-direction: column; }
+
+  /* Delete confirm */
+  .confirm-bar {
+    display: none; padding: 12px 20px; background: #fef2f2; border-bottom: 1px solid #fecaca;
+    align-items: center; justify-content: space-between; font-size: 13px; color: var(--danger);
+  }
+  .confirm-bar.show { display: flex; }
+
+  /* Preset category label */
+  .preset-category {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-light);
+    margin: 8px 0 4px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Print */
+  @media print {
+    body * { visibility: hidden; }
+    .modal-overlay, .modal-overlay * { visibility: visible; }
+    .modal-overlay { position: static; background: none; display: block !important; }
+    .modal { box-shadow: none; width: 100%; max-height: none; }
+    .modal-footer { display: none !important; }
+  }
+
+  /* Sort arrows */
+  .sort-arrow { font-size: 10px; margin-left: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ==================== LOGIN SCREEN ==================== -->
+<div class="screen active" id="loginScreen">
+  <div class="login-screen">
+    <div class="login-container">
+      <span class="emoji-icon">⌨️</span>
+      <h1>워드 타자 능력 평가</h1>
+      <p class="subtitle">역할을 선택하여 입장하세요</p>
+      <div class="role-buttons">
+        <button class="role-btn" onclick="selectRole('admin')" id="roleAdmin">
+          <span class="role-icon">👨‍🏫</span>
+          <div class="role-info">
+            <h3>관리자 (선생님)</h3>
+            <p>시험 텍스트·시간 설정 / 전체 결과 대시보드</p>
+          </div>
+        </button>
+        <button class="role-btn" onclick="selectRole('student')" id="roleStudent">
+          <span class="role-icon">👨‍🎓</span>
+          <div class="role-info">
+            <h3>학생</h3>
+            <p>타자 시험 응시</p>
+          </div>
+        </button>
+      </div>
+      <div class="admin-pw-section" id="adminPwSection">
+        <input type="password" id="adminPwInput" placeholder="관리자 비밀번호 입력" onkeypress="if(event.key==='Enter')enterSystem()">
+      </div>
+      <button class="login-enter-btn" id="enterBtn" onclick="enterSystem()" disabled>입장하기</button>
+      <div class="login-error" id="loginError">비밀번호가 틀렸습니다. (기본 비밀번호: 1234)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADMIN SCREEN ==================== -->
+<div class="screen" id="adminScreen">
+  <div class="header header-admin">
+    <h1>👨‍🏫 관리자 패널</h1>
+    <div class="header-right">
+      <span class="header-tag tag-admin">ADMIN</span>
+      <button class="btn btn-logout" onclick="logout()">🚪 로그아웃</button>
+    </div>
+  </div>
+  <div class="admin-body">
+    <div class="admin-sidebar">
+      <div class="admin-nav-item active" onclick="switchAdminTab('settings', this)">⚙️ 시험 설정</div>
+      <div class="admin-nav-item" onclick="switchAdminTab('dashboard', this)">📊 결과 대시보드</div>
+    </div>
+    <div class="admin-content">
+      <!-- Settings Tab -->
+      <div class="admin-tab active" id="tabSettings">
+        <div class="settings-card">
+          <h3>⏱️ 시험 시간 설정</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>시험 시간 (분)</label>
+              <input type="number" id="adminTimeMin" value="5" min="1" max="30">
+            </div>
+            <div class="form-group">
+              <label>빠른 선택</label>
+              <div class="preset-buttons">
+                <button class="preset-btn" onclick="setTime(3)">3분</button>
+                <button class="preset-btn" onclick="setTime(5)">5분</button>
+                <button class="preset-btn" onclick="setTime(7)">7분</button>
+                <button class="preset-btn" onclick="setTime(10)">10분</button>
+                <button class="preset-btn" onclick="setTime(15)">15분</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>📝 시험 텍스트 설정</h3>
+          <div class="form-group">
+            <label>텍스트 제목</label>
+            <input type="text" id="adminTextTitle" value="애국가" placeholder="예: 애국가, 훈민정음 서문 등">
+          </div>
+          <div class="form-group">
+            <label>📚 기본 제공 텍스트 (한글)</label>
+            <div class="preset-buttons">
+              <button class="preset-btn" onclick="loadPreset('aegukga')">🇰🇷 애국가</button>
+              <button class="preset-btn" onclick="loadPreset('hunmin')">📜 훈민정음 서문</button>
+              <button class="preset-btn" onclick="loadPreset('spring')">🌸 봄(이해인)</button>
+              <button class="preset-btn" onclick="loadPreset('namaste')">🍂 낙엽(이해인)</button>
+              <button class="preset-btn" onclick="loadPreset('grass')">🌿 풀꽃(나태주)</button>
+              <button class="preset-btn" onclick="loadPreset('seosijung')">🌅 국화 옆에서(서정주)</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>📚 기본 제공 텍스트 (영어)</label>
+            <div class="preset-buttons">
+              <button class="preset-btn" onclick="loadPreset('frost')">🌲 The Road Not Taken</button>
+              <button class="preset-btn" onclick="loadPreset('shakespeare')">🎭 Shakespeare Sonnet 18</button>
+              <button class="preset-btn" onclick="loadPreset('mlk')">✊ I Have a Dream</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>📌 내가 저장한 텍스트</label>
+            <div class="preset-buttons" id="customPresetsArea">
+              <span style="font-size:12px; color:var(--text-light);">저장된 커스텀 텍스트가 없습니다.</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>시험 텍스트 (학생들이 이 내용을 보고 타이핑합니다)</label>
+            <textarea id="adminTextArea" oninput="updateCharCount()">동해물과 백두산이 마르고 닳도록
+하느님이 보우하사 우리나라 만세
+무궁화 삼천리 화려강산
+대한 사람 대한으로 길이 보전하세
+남산 위에 저 소나무 철갑을 두른 듯
+바람서리 불변함은 우리 기상일세
+무궁화 삼천리 화려강산
+대한 사람 대한으로 길이 보전하세
+가을 하늘 공활한데 높고 구름 없이
+밝은 달은 우리 가슴 일편단심일세
+무궁화 삼천리 화려강산
+대한 사람 대한으로 길이 보전하세
+이 기상과 이 맘으로 충성을 다하여
+괴로우나 즐거우나 나라 사랑하세
+무궁화 삼천리 화려강산
+대한 사람 대한으로 길이 보전하세</textarea>
+            <div class="char-counter" id="charCounter">0글자</div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button class="btn btn-purple" onclick="saveSettings()" style="padding: 12px 32px; font-size: 15px;">💾 시험에 적용</button>
+            <button class="btn btn-outline" onclick="saveAsCustomPreset()" style="padding: 12px 24px; font-size: 14px; border-color: #059669; color: #059669;">📌 내 텍스트로 저장</button>
+          </div>
+          <div class="save-notice" id="saveNotice">✅ 설정이 저장되었습니다! 학생들이 입장하면 이 설정이 적용됩니다.</div>
+          <div class="save-notice" id="presetSaveNotice" style="background:#ecfdf5; color:#059669;">📌 커스텀 프리셋으로 저장되었습니다!</div>
+        </div>
+        <div class="settings-card">
+          <h3>🔑 관리자 비밀번호 변경</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label>새 비밀번호</label>
+              <input type="password" id="newPwInput" placeholder="새 비밀번호">
+            </div>
+            <div class="form-group">
+              <label>비밀번호 확인</label>
+              <input type="password" id="newPwConfirm" placeholder="비밀번호 확인">
+            </div>
+          </div>
+          <button class="btn btn-outline" onclick="changePassword()">비밀번호 변경</button>
+        </div>
+      </div>
+
+      <!-- Dashboard Tab -->
+      <div class="admin-tab" id="tabDashboard">
+        <div class="dash-stats">
+          <div class="dash-stat-card ds-primary">
+            <div class="ds-label">총 응시자</div>
+            <div class="ds-value" id="dashTotal">0</div>
+            <div class="ds-sub">명</div>
+          </div>
+          <div class="dash-stat-card ds-success">
+            <div class="ds-label">평균 점수</div>
+            <div class="ds-value" id="dashAvg">-</div>
+            <div class="ds-sub">점</div>
+          </div>
+          <div class="dash-stat-card ds-warning">
+            <div class="ds-label">최고 점수</div>
+            <div class="ds-value" id="dashMax">-</div>
+            <div class="ds-sub" id="dashMaxName">-</div>
+          </div>
+          <div class="dash-stat-card ds-danger">
+            <div class="ds-label">평균 타수(CPM)</div>
+            <div class="ds-value" id="dashCPM">-</div>
+            <div class="ds-sub">글자/분</div>
+          </div>
+        </div>
+
+        <div class="results-table-container">
+          <div class="results-table-header">
+            <h3>📋 전체 학생 결과</h3>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-outline" onclick="exportCSV()" style="font-size:12px; padding: 6px 12px;">📥 CSV 내보내기</button>
+              <button class="btn btn-danger" onclick="showClearConfirm()" style="font-size:12px; padding: 6px 12px;">🗑️ 전체 삭제</button>
+              <button class="btn btn-outline" onclick="refreshDashboard()" style="font-size:12px; padding: 6px 12px;">🔄 새로고침</button>
+            </div>
+          </div>
+          <div class="confirm-bar" id="clearConfirm">
+            <span>⚠️ 모든 학생 결과를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</span>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-danger" onclick="clearAllResults()" style="font-size:12px; padding:5px 12px;">삭제</button>
+              <button class="btn btn-outline" onclick="hideClearConfirm()" style="font-size:12px; padding:5px 12px;">취소</button>
+            </div>
+          </div>
+          <div id="resultsTableArea">
+            <div class="no-data">
+              <span class="nd-icon">📭</span>
+              아직 제출된 결과가 없습니다.<br>학생들이 시험을 완료하면 여기에 표시됩니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== STUDENT SCREEN ==================== -->
+<div class="screen" id="studentScreen">
+  <div class="header">
+    <h1>⌨️ 타자 능력 평가 <span style="font-size:13px; font-weight:400; opacity:0.7; margin-left:8px;" id="testTitleDisplay"></span></h1>
+    <div class="header-right">
+      <div class="student-info-bar">
+        <label>학년</label>
+        <input type="text" id="sGrade" placeholder="0" maxlength="1">
+        <label>반</label>
+        <input type="text" id="sClass" placeholder="0" maxlength="2">
+        <label>번호</label>
+        <input type="text" id="sNumber" placeholder="0" maxlength="2">
+        <label>이름</label>
+        <input type="text" id="sName" placeholder="이름" class="name-input">
+      </div>
+      <div class="timer-section">
+        <div class="timer-display" id="timerDisplay">05:00</div>
+        <button class="btn btn-start" id="startBtn" onclick="startTest()">▶ 시작</button>
+        <button class="btn btn-stop" id="stopBtn" onclick="stopTest()" style="display:none;">⏹ 제출</button>
+        <button class="btn btn-reset" onclick="resetTest()">↺ 리셋</button>
+      </div>
+      <button class="btn btn-logout" onclick="logout()">🚪</button>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div class="panel left-panel">
+      <div class="panel-header">
+        <h2>📖 원본 텍스트</h2>
+        <span class="panel-badge" id="refBadge">참조용</span>
+      </div>
+      <div class="reference-text" id="referencePanel"></div>
+    </div>
+    <div class="panel right-panel">
+      <div class="panel-header">
+        <h2>⌨️ 타이핑 영역</h2>
+        <span class="panel-badge" id="typingStatus" style="background:#dcfce7; color:var(--success);">대기 중</span>
+      </div>
+      <div class="typing-area">
+        <div class="live-stats">
+          <div class="live-stat">입력: <strong id="liveCharCount">0</strong>자</div>
+          <div class="live-stat">타수: <strong id="liveCPM">0</strong>/분</div>
+          <div class="live-stat">진행률: <strong id="liveProgress">0%</strong></div>
+        </div>
+        <div class="typing-wrapper">
+          <textarea id="typingArea" placeholder="시작 버튼을 누른 후 왼쪽 텍스트를 보고 타이핑하세요..." disabled></textarea>
+          <div class="submitted-overlay" id="submittedOverlay">
+            <span class="check-icon">✅</span>
+            <span class="sub-text">제출 완료!</span>
+            <span class="sub-detail">결과가 관리자에게 전송되었습니다.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span id="statusLeft">💡 시작 버튼을 누르면 타이머가 시작됩니다.</span>
+    <span id="statusRight">준비됨</span>
+  </div>
+</div>
+
+<!-- ==================== STUDENT DETAIL MODAL ==================== -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📊 개별 학생 결과</h2>
+      <p id="detailStudentInfo"></p>
+    </div>
+    <div class="modal-body" id="detailModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="printDetail()">🖨️ 인쇄</button>
+      <button class="btn btn-outline" onclick="closeDetailModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== GLOBAL STATE =====================
+const DEFAULT_PW = '1234';
+const STORAGE_KEY_SETTINGS = 'typingtest_settings';
+const STORAGE_KEY_RESULTS = 'typingtest_results';
+const STORAGE_KEY_PW = 'typingtest_pw';
+const STORAGE_KEY_CUSTOM_PRESETS = 'typingtest_custom_presets';
+
+const PRESETS = {
+  aegukga: {
+    title: '애국가',
+    text: `동해물과 백두산이 마르고 닳도록
+하느님이 보우하사 우리나라 만세
+무궁화 삼천리 화려강산
+대한 사람 대한으로 길이 보전하세
+남산 위에 저 소나무 철갑을 두른 듯
+바람서리 불변함은 우리 기상일세
+무궁화 삼천리 화려강산
+대한 사람 대한으로 길이 보전하세
+가을 하늘 공활한데 높고 구름 없이
+밝은 달은 우리 가슴 일편단심일세
+무궁화 삼천리 화려강산
+대한 사람 대한으로 길이 보전하세
+이 기상과 이 맘으로 충성을 다하여
+괴로우나 즐거우나 나라 사랑하세
+무궁화 삼천리 화려강산
+대한 사람 대한으로 길이 보전하세`
+  },
+  hunmin: {
+    title: '훈민정음 서문',
+    text: `나랏말싸미 듕귁에 달아 문자와로 서로 사맛디 아니할쎄
+이런 젼차로 어린 백성이 니르고져 홀 배 이셔도
+마참내 제 뜨들 시러 펴디 못할 노미 하니라
+내 이를 위하야 어엿비 너겨 새로 스물여덟 자를 맹가노니
+사람마다 해여 수비 니겨 날로 쑤메 편안케 하고져 할 따라미니라`
+  },
+  spring: {
+    title: '봄 (이해인)',
+    text: `꽃이 피는 건 힘이 들지만
+지는 건 잠깐이더군요
+같이 웃는 건 힘이 들지만
+같이 우는 건 잠깐이더군요
+
+살아가는 건 힘이 들지만
+그래도 한 세상 잠깐이더군요
+
+봄이 오는 건 힘이 들지만
+꽃이 지는 건 잠깐이더군요
+사랑이 오는 건 힘이 들지만
+사랑이 가는 건 잠깐이더군요`
+  },
+  namaste: {
+    title: '낙엽 (이해인)',
+    text: `가을에는 기도하게 하소서
+낙엽들이 지는 때를 기다려 내게 주신
+겸허한 모국어로 나를 채우소서
+
+가을에는 사랑하게 하소서
+오직 한 사람을 택하게 하시고
+가장 아름다운 열매를 위하여
+이 비옥한 시간을 가꾸게 하소서
+
+가을에는 호올로 있게 하소서
+나의 영혼 굽이치는 바다와
+백합의 골짜기를 지나
+마른 나뭇가지 위에 다다른 까마귀같이
+눈 내리는 들판 위의
+머언 곳에 쓰러진 성자같이
+호올로 있게 하소서`
+  },
+  grass: {
+    title: '풀꽃 (나태주)',
+    text: `자세히 보아야 예쁘다
+오래 보아야 사랑스럽다
+너도 그렇다
+
+이름을 알고 나면 이웃이 되고
+색깔을 알고 나면 친구가 되고
+모양을 알고 나면 연인이 된다
+아 이것은 비밀
+
+자세히 보아야 예쁘다
+오래 보아야 사랑스럽다
+너도 그렇다
+
+들여다보아야 보인다
+기다려야 만난다
+네가 그렇다`
+  },
+  seosijung: {
+    title: '국화 옆에서 (서정주)',
+    text: `한 송이의 국화꽃을 피우기 위해
+봄부터 소쩍새는
+그렇게 울었나 보다
+
+한 송이의 국화꽃을 피우기 위해
+천둥은 먹구름 속에서
+또 그렇게 울었나 보다
+
+그립고 아쉬움에 가슴 조이던
+머언 먼 젊음의 뒤안길에서
+인제는 돌아와 거울 앞에 선
+내 누님같이 생긴 꽃이여
+
+노란 네 꽃잎이 피려고
+간밤에 무서리가 저리 내리고
+내게는 잠도
+오지 않았나 보다`
+  },
+  frost: {
+    title: 'The Road Not Taken (Robert Frost)',
+    text: `Two roads diverged in a yellow wood,
+And sorry I could not travel both
+And be one traveler, long I stood
+And looked down one as far as I could
+To where it bent in the undergrowth;
+
+Then took the other, as just as fair,
+And having perhaps the better claim,
+Because it was grassy and wanted wear;
+Though as for that the passing there
+Had worn them really about the same,
+
+And both that morning equally lay
+In leaves no step had trodden black.
+Oh, I kept the first for another day!
+Yet knowing how way leads on to way,
+I doubted if I should ever come back.
+
+I shall be telling this with a sigh
+Somewhere ages and ages hence:
+Two roads diverged in a wood, and I—
+I took the one less traveled by,
+And that has made all the difference.`
+  },
+  shakespeare: {
+    title: 'Sonnet 18 (Shakespeare)',
+    text: `Shall I compare thee to a summer's day?
+Thou art more lovely and more temperate:
+Rough winds do shake the darling buds of May,
+And summer's lease hath all too short a date;
+Sometime too hot the eye of heaven shines,
+And often is his gold complexion dimm'd;
+And every fair from fair sometime declines,
+By chance or nature's changing course untrimm'd;
+But thy eternal summer shall not fade,
+Nor lose possession of that fair thou ow'st;
+Nor shall death brag thou wander'st in his shade,
+When in eternal lines to time thou grow'st:
+So long as men can breathe or eyes can see,
+So long lives this, and this gives life to thee.`
+  },
+  mlk: {
+    title: 'I Have a Dream (Martin Luther King Jr.)',
+    text: `I have a dream that one day this nation will rise up
+and live out the true meaning of its creed:
+We hold these truths to be self-evident,
+that all men are created equal.
+
+I have a dream that one day on the red hills of Georgia,
+the sons of former slaves and the sons of former slave owners
+will be able to sit down together at the table of brotherhood.
+
+I have a dream that my four little children
+will one day live in a nation
+where they will not be judged by the color of their skin
+but by the content of their character.
+
+I have a dream today.
+I have a dream that one day every valley shall be exalted,
+and every hill and mountain shall be made low,
+the rough places will be made plain,
+and the crooked places will be made straight,
+and the glory of the Lord shall be revealed
+and all flesh shall see it together.`
+  }
+};
+
+let selectedRole = null;
+let timerInterval = null;
+let remainingSeconds = 0;
+let testStarted = false;
+let testStartTime = null;
+let currentSortCol = null;
+let currentSortAsc = true;
+
+// ===================== LOGIN =====================
+function selectRole(role) {
+  selectedRole = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById(role === 'admin' ? 'roleAdmin' : 'roleStudent').classList.add('selected');
+  document.getElementById('adminPwSection').classList.toggle('show', role === 'admin');
+  document.getElementById('enterBtn').disabled = false;
+  document.getElementById('loginError').classList.remove('show');
+  if (role === 'admin') {
+    setTimeout(() => document.getElementById('adminPwInput').focus(), 100);
+  }
+}
+
+function enterSystem() {
+  if (!selectedRole) return;
+  if (selectedRole === 'admin') {
+    const pw = document.getElementById('adminPwInput').value;
+    const storedPw = localStorage.getItem(STORAGE_KEY_PW) || DEFAULT_PW;
+    if (pw !== storedPw) {
+      document.getElementById('loginError').classList.add('show');
+      return;
+    }
+    showScreen('adminScreen');
+    loadAdminSettings();
+    updateCharCount();
+    renderCustomPresets();
+  } else {
+    showScreen('studentScreen');
+    loadStudentSettings();
+  }
+}
+
+function logout() {
+  if (testStarted) {
+    if (!confirm('시험 중입니다. 정말 나가시겠습니까?')) return;
+    clearInterval(timerInterval);
+  }
+  testStarted = false;
+  showScreen('loginScreen');
+  document.getElementById('adminPwInput').value = '';
+  selectedRole = null;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('adminPwSection').classList.remove('show');
+  document.getElementById('enterBtn').disabled = true;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===================== ADMIN SETTINGS =====================
+function switchAdminTab(tab, el) {
+  document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(tab === 'settings' ? 'tabSettings' : 'tabDashboard').classList.add('active');
+  if (tab === 'dashboard') refreshDashboard();
+}
+
+function setTime(min) { document.getElementById('adminTimeMin').value = min; }
+
+function loadPreset(key) {
+  const p = PRESETS[key];
+  if (!p) return;
+  document.getElementById('adminTextTitle').value = p.title;
+  document.getElementById('adminTextArea').value = p.text;
+  updateCharCount();
+}
+
+function updateCharCount() {
+  const text = document.getElementById('adminTextArea').value;
+  document.getElementById('charCounter').textContent = text.length + '글자';
+}
+
+function saveSettings() {
+  const title = document.getElementById('adminTextTitle').value.trim();
+  const text = document.getElementById('adminTextArea').value.trim();
+
+  if (!text) {
+    alert('시험 텍스트를 입력해주세요!');
+    return;
+  }
+  if (!title) {
+    alert('텍스트 제목을 입력해주세요!');
+    return;
+  }
+
+  const settings = {
+    timeMin: parseInt(document.getElementById('adminTimeMin').value) || 5,
+    title: title || '타자시험',
+    text: text
+  };
+  localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+  const notice = document.getElementById('saveNotice');
+  notice.classList.add('show');
+  setTimeout(() => notice.classList.remove('show'), 3000);
+}
+
+function loadAdminSettings() {
+  const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+  if (raw) {
+    const s = JSON.parse(raw);
+    document.getElementById('adminTimeMin').value = s.timeMin || 5;
+    document.getElementById('adminTextTitle').value = s.title || '애국가';
+    document.getElementById('adminTextArea').value = s.text || '';
+  }
+}
+
+// ===================== CUSTOM PRESETS =====================
+function getCustomPresets() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOM_PRESETS) || '[]');
+  } catch(e) {
+    return [];
+  }
+}
+
+function saveCustomPresets(presets) {
+  localStorage.setItem(STORAGE_KEY_CUSTOM_PRESETS, JSON.stringify(presets));
+}
+
+function saveAsCustomPreset() {
+  const title = document.getElementById('adminTextTitle').value.trim();
+  const text = document.getElementById('adminTextArea').value.trim();
+
+  if (!title) {
+    alert('제목을 입력해주세요!');
+    document.getElementById('adminTextTitle').focus();
+    return;
+  }
+  if (!text) {
+    alert('텍스트를 입력해주세요!');
+    document.getElementById('adminTextArea').focus();
+    return;
+  }
+
+  const presets = getCustomPresets();
+
+  // Check duplicate title
+  const existIdx = presets.findIndex(p => p.title === title);
+  if (existIdx >= 0) {
+    if (!confirm(`"${title}" 이름의 프리셋이 이미 존재합니다. 덮어쓰시겠습니까?`)) return;
+    presets[existIdx] = { title, text, createdAt: new Date().toISOString() };
+  } else {
+    presets.push({ title, text, createdAt: new Date().toISOString() });
+  }
+
+  saveCustomPresets(presets);
+  renderCustomPresets();
+
+  const notice = document.getElementById('presetSaveNotice');
+  notice.classList.add('show');
+  setTimeout(() => notice.classList.remove('show'), 3000);
+}
+
+function loadCustomPreset(idx) {
+  const presets = getCustomPresets();
+  if (idx < 0 || idx >= presets.length) return;
+  const p = presets[idx];
+  document.getElementById('adminTextTitle').value = p.title;
+  document.getElementById('adminTextArea').value = p.text;
+  updateCharCount();
+}
+
+function deleteCustomPreset(idx, event) {
+  event.stopPropagation();
+  const presets = getCustomPresets();
+  if (idx < 0 || idx >= presets.length) return;
+  if (!confirm(`"${presets[idx].title}" 프리셋을 삭제하시겠습니까?`)) return;
+  presets.splice(idx, 1);
+  saveCustomPresets(presets);
+  renderCustomPresets();
+}
+
+function renderCustomPresets() {
+  const presets = getCustomPresets();
+  const area = document.getElementById('customPresetsArea');
+  if (presets.length === 0) {
+    area.innerHTML = '<span style="font-size:12px; color:var(--text-light);">저장된 커스텀 텍스트가 없습니다. 아래에서 제목과 텍스트를 입력 후 "내 텍스트로 저장"을 눌러주세요.</span>';
+    return;
+  }
+  let html = '';
+  presets.forEach((p, i) => {
+    html += `<span class="custom-preset-item" onclick="loadCustomPreset(${i})">
+      📌 ${escapeHtml(p.title)} (${p.text.length}자)
+      <button class="delete-preset" onclick="deleteCustomPreset(${i}, event)" title="삭제">✕</button>
+    </span>`;
+  });
+  area.innerHTML = html;
+}
+
+function changePassword() {
+  const pw1 = document.getElementById('newPwInput').value;
+  const pw2 = document.getElementById('newPwConfirm').value;
+  if (!pw1 || pw1.length < 2) { alert('비밀번호를 2자 이상 입력해주세요.'); return; }
+  if (pw1 !== pw2) { alert('비밀번호가 일치하지 않습니다.'); return; }
+  localStorage.setItem(STORAGE_KEY_PW, pw1);
+  alert('비밀번호가 변경되었습니다.');
+  document.getElementById('newPwInput').value = '';
+  document.getElementById('newPwConfirm').value = '';
+}
+
+// ===================== STUDENT TEST =====================
+function loadStudentSettings() {
+  const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+  let settings;
+  if (raw) {
+    settings = JSON.parse(raw);
+  } else {
+    settings = { timeMin: 5, title: '애국가', text: PRESETS.aegukga.text };
+  }
+  document.getElementById('referencePanel').textContent = settings.text;
+  document.getElementById('testTitleDisplay').textContent = '[ ' + settings.title + ' ]';
+  document.getElementById('refBadge').textContent = settings.title;
+  remainingSeconds = (settings.timeMin || 5) * 60;
+  updateTimerDisplay();
+  // Reset state
+  document.getElementById('typingArea').value = '';
+  document.getElementById('typingArea').disabled = true;
+  document.getElementById('typingArea').classList.remove('active-typing');
+  document.getElementById('startBtn').style.display = '';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('typingStatus').textContent = '대기 중';
+  document.getElementById('liveCharCount').textContent = '0';
+  document.getElementById('liveCPM').textContent = '0';
+  document.getElementById('liveProgress').textContent = '0%';
+  document.getElementById('submittedOverlay').classList.remove('show');
+  testStarted = false;
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(remainingSeconds / 60);
+  const s = remainingSeconds % 60;
+  const display = document.getElementById('timerDisplay');
+  display.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  display.classList.remove('warning', 'danger');
+  if (remainingSeconds <= 30) display.classList.add('danger');
+  else if (remainingSeconds <= 60) display.classList.add('warning');
+}
+
+function startTest() {
+  const name = document.getElementById('sName').value.trim();
+  if (!name) { alert('이름을 입력해주세요!'); document.getElementById('sName').focus(); return; }
+  testStarted = true;
+  testStartTime = Date.now();
+  const ta = document.getElementById('typingArea');
+  ta.disabled = false;
+  ta.classList.add('active-typing');
+  ta.focus();
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = '';
+  document.getElementById('typingStatus').textContent = '진행 중 ⏳';
+  document.getElementById('typingStatus').style.background = '#fef3c7';
+  document.getElementById('typingStatus').style.color = '#b45309';
+  document.getElementById('statusLeft').textContent = '⏳ 시험 진행 중... 최선을 다하세요!';
+  document.getElementById('statusRight').textContent = '타이핑 중';
+
+  // Disable student info
+  ['sGrade','sClass','sNumber','sName'].forEach(id => document.getElementById(id).disabled = true);
+
+  timerInterval = setInterval(() => {
+    remainingSeconds--;
+    updateTimerDisplay();
+    updateLiveStats();
+    if (remainingSeconds <= 0) {
+      stopTest();
+    }
+  }, 1000);
+}
+
+function updateLiveStats() {
+  const ta = document.getElementById('typingArea');
+  const typed = ta.value;
+  const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+  const settings = raw ? JSON.parse(raw) : { text: PRESETS.aegukga.text, timeMin: 5 };
+  const original = settings.text;
+  const totalOrigLen = original.length;
+  const typedLen = typed.length;
+  const elapsed = (Date.now() - testStartTime) / 60000;
+  const cpm = elapsed > 0 ? Math.round(typedLen / elapsed) : 0;
+  const progress = totalOrigLen > 0 ? Math.min(100, Math.round(typedLen / totalOrigLen * 100)) : 0;
+
+  document.getElementById('liveCharCount').textContent = typedLen;
+  document.getElementById('liveCPM').textContent = cpm;
+  document.getElementById('liveProgress').textContent = progress + '%';
+}
+
+function stopTest() {
+  if (!testStarted) return;
+  clearInterval(timerInterval);
+  testStarted = false;
+
+  const ta = document.getElementById('typingArea');
+  ta.disabled = true;
+  ta.classList.remove('active-typing');
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'none';
+
+  // Calculate and save result
+  const result = calculateResult();
+  saveResult(result);
+
+  // Show submitted
+  document.getElementById('submittedOverlay').classList.add('show');
+  document.getElementById('typingStatus').textContent = '제출 완료 ✅';
+  document.getElementById('typingStatus').style.background = '#dcfce7';
+  document.getElementById('typingStatus').style.color = '#15803d';
+  document.getElementById('statusLeft').textContent = '✅ 제출 완료! 결과가 관리자에게 전송되었습니다.';
+}
+
+function resetTest() {
+  if (testStarted && !confirm('진행 중인 시험을 초기화하시겠습니까?')) return;
+  clearInterval(timerInterval);
+  testStarted = false;
+  ['sGrade','sClass','sNumber','sName'].forEach(id => document.getElementById(id).disabled = false);
+  loadStudentSettings();
+}
+
+// ===================== SCORING ENGINE =====================
+function lcs(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0 || n === 0) return 0;
+  let prev = new Uint16Array(n + 1);
+  let curr = new Uint16Array(n + 1);
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (a[i-1] === b[j-1]) curr[j] = prev[j-1] + 1;
+      else curr[j] = Math.max(prev[j], curr[j-1]);
+    }
+    [prev, curr] = [curr, prev];
+    curr.fill(0);
+  }
+  return prev[n];
+}
+
+function diffChars(original, typed) {
+  const m = original.length, n = typed.length;
+  const dp = [];
+  for (let i = 0; i <= m; i++) {
+    dp[i] = new Uint16Array(n + 1);
+  }
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (original[i-1] === typed[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
+      else dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+    }
+  }
+  let i = m, j = n;
+  const ops = [];
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && original[i-1] === typed[j-1]) {
+      ops.push({ type: 'match', ch: original[i-1] });
+      i--; j--;
+    } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
+      ops.push({ type: 'extra', ch: typed[j-1] });
+      j--;
+    } else {
+      ops.push({ type: 'missing', ch: original[i-1] });
+      i--;
+    }
+  }
+  ops.reverse();
+  return ops;
+}
+
+function calculateResult() {
+  const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+  const settings = raw ? JSON.parse(raw) : { text: PRESETS.aegukga.text, timeMin: 5 };
+  const original = settings.text;
+  const typed = document.getElementById('typingArea').value;
+  const timeMin = settings.timeMin || 5;
+  const elapsedMs = Date.now() - testStartTime;
+  const elapsedMin = elapsedMs / 60000;
+
+  const origLen = original.length;
+  const typedLen = typed.length;
+
+  const lcsLen = lcs(original, typed);
+  const accuracy = origLen > 0 ? lcsLen / origLen : 0;
+
+  const cpm = elapsedMin > 0 ? Math.round(typedLen / elapsedMin) : 0;
+
+  let spaceCorrect = 0, spaceTotal = 0;
+  for (let i = 0; i < origLen; i++) {
+    if (original[i] === ' ') {
+      spaceTotal++;
+      if (i < typedLen && typed[i] === ' ') spaceCorrect++;
+    }
+  }
+  const spacingAcc = spaceTotal > 0 ? spaceCorrect / spaceTotal : 1;
+
+  const completeness = origLen > 0 ? Math.min(1, typedLen / origLen) : 0;
+  const typoCount = origLen > 0 ? Math.max(0, origLen - lcsLen) : 0;
+
+  const scoreAccuracy = Math.round(accuracy * 40);
+  const maxCPM = 200;
+  const scoreSpeed = Math.round(Math.min(1, cpm / maxCPM) * 30);
+  const scoreSpacing = Math.round(spacingAcc * 20);
+  const scoreComplete = Math.round(completeness * 10);
+  const totalScore = scoreAccuracy + scoreSpeed + scoreSpacing + scoreComplete;
+
+  let grade;
+  if (totalScore >= 95) grade = 'S';
+  else if (totalScore >= 80) grade = 'A';
+  else if (totalScore >= 60) grade = 'B';
+  else if (totalScore >= 40) grade = 'C';
+  else grade = 'D';
+
+  return {
+    studentGrade: document.getElementById('sGrade').value || '-',
+    studentClass: document.getElementById('sClass').value || '-',
+    studentNumber: document.getElementById('sNumber').value || '-',
+    studentName: document.getElementById('sName').value || '미입력',
+    timestamp: new Date().toISOString(),
+    elapsedSec: Math.round(elapsedMs / 1000),
+    typed: typed,
+    origLen, typedLen, lcsLen,
+    accuracy: Math.round(accuracy * 1000) / 10,
+    cpm,
+    spacingAcc: Math.round(spacingAcc * 1000) / 10,
+    spaceCorrect, spaceTotal,
+    completeness: Math.round(completeness * 1000) / 10,
+    typoCount,
+    scoreAccuracy, scoreSpeed, scoreSpacing, scoreComplete,
+    totalScore, grade
+  };
+}
+
+function saveResult(result) {
+  let results = JSON.parse(localStorage.getItem(STORAGE_KEY_RESULTS) || '[]');
+  results.push(result);
+  localStorage.setItem(STORAGE_KEY_RESULTS, JSON.stringify(results));
+}
+
+// ===================== DASHBOARD =====================
+function refreshDashboard() {
+  const results = JSON.parse(localStorage.getItem(STORAGE_KEY_RESULTS) || '[]');
+  const area = document.getElementById('resultsTableArea');
+
+  document.getElementById('dashTotal').textContent = results.length;
+  if (results.length === 0) {
+    document.getElementById('dashAvg').textContent = '-';
+    document.getElementById('dashMax').textContent = '-';
+    document.getElementById('dashMaxName').textContent = '-';
+    document.getElementById('dashCPM').textContent = '-';
+    area.innerHTML = '<div class="no-data"><span class="nd-icon">📭</span>아직 제출된 결과가 없습니다.</div>';
+    return;
+  }
+
+  const avg = Math.round(results.reduce((s, r) => s + r.totalScore, 0) / results.length * 10) / 10;
+  const maxR = results.reduce((a, b) => a.totalScore >= b.totalScore ? a : b);
+  const avgCPM = Math.round(results.reduce((s, r) => s + r.cpm, 0) / results.length);
+
+  document.getElementById('dashAvg').textContent = avg;
+  document.getElementById('dashMax').textContent = maxR.totalScore;
+  document.getElementById('dashMaxName').textContent = maxR.studentName;
+  document.getElementById('dashCPM').textContent = avgCPM;
+
+  let sorted = [...results];
+  sorted.forEach((r, i) => r._idx = i);
+  if (currentSortCol) {
+    sorted.sort((a, b) => {
+      let va = a[currentSortCol], vb = b[currentSortCol];
+      if (typeof va === 'string') va = va.toLowerCase();
+      if (typeof vb === 'string') vb = vb.toLowerCase();
+      if (va < vb) return currentSortAsc ? -1 : 1;
+      if (va > vb) return currentSortAsc ? 1 : -1;
+      return 0;
+    });
+  } else {
+    sorted.sort((a, b) => b.totalScore - a.totalScore);
+  }
+
+  let html = '<table class="results-table"><thead><tr>';
+  const cols = [
+    { key: null, label: '순위' },
+    { key: 'studentGrade', label: '학년' },
+    { key: 'studentClass', label: '반' },
+    { key: 'studentNumber', label: '번호' },
+    { key: 'studentName', label: '이름' },
+    { key: 'totalScore', label: '총점' },
+    { key: 'grade', label: '등급' },
+    { key: 'accuracy', label: '정확도%' },
+    { key: 'cpm', label: 'CPM' },
+    { key: 'spacingAcc', label: '띄어쓰기%' },
+    { key: 'completeness', label: '완성도%' },
+    { key: null, label: '상세' }
+  ];
+  cols.forEach(c => {
+    const arrow = (c.key && currentSortCol === c.key) ? (currentSortAsc ? ' ▲' : ' ▼') : '';
+    const onclick = c.key ? ` onclick="sortTable('${c.key}')"` : '';
+    html += `<th${onclick}>${c.label}${arrow}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  sorted.forEach((r, idx) => {
+    const rank = idx + 1;
+    const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
+    const rankIcon = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+    html += `<tr>
+      <td class="${rankClass}" style="text-align:center;">${rankIcon}</td>
+      <td>${r.studentGrade}</td>
+      <td>${r.studentClass}</td>
+      <td>${r.studentNumber}</td>
+      <td><strong>${r.studentName}</strong></td>
+      <td class="num"><strong>${r.totalScore}</strong></td>
+      <td><span class="grade-badge grade-${r.grade}">${r.grade}</span></td>
+      <td class="num">${r.accuracy}%</td>
+      <td class="num">${r.cpm}</td>
+      <td class="num">${r.spacingAcc}%</td>
+      <td class="num">${r.completeness}%</td>
+      <td><button class="btn btn-outline" style="font-size:11px; padding:3px 10px;" onclick="showDetail(${r._idx})">📄</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  area.innerHTML = html;
+}
+
+function sortTable(col) {
+  if (currentSortCol === col) currentSortAsc = !currentSortAsc;
+  else { currentSortCol = col; currentSortAsc = true; }
+  refreshDashboard();
+}
+
+// ===================== DETAIL MODAL =====================
+function showDetail(idx) {
+  const results = JSON.parse(localStorage.getItem(STORAGE_KEY_RESULTS) || '[]');
+  const r = results[idx];
+  if (!r) return;
+
+  const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+  const settings = raw ? JSON.parse(raw) : { text: PRESETS.aegukga.text };
+  const original = settings.text;
+
+  document.getElementById('detailStudentInfo').textContent =
+    `${r.studentGrade}학년 ${r.studentClass}반 ${r.studentNumber}번 ${r.studentName}`;
+
+  let body = '';
+  body += `<div class="score-total">
+    <div class="label">종합 점수</div>
+    <div><span class="score">${r.totalScore}</span> <span class="max">/ 100</span></div>
+    <div class="score-grade grade-${r.grade}">${r.grade}등급</div>
+  </div>`;
+  body += `<div class="score-details">
+    <div class="score-card accuracy"><div class="card-label">✅ 정확도</div><div class="card-value">${r.accuracy}%</div><div class="card-sub">${r.lcsLen}/${r.origLen}자 일치</div></div>
+    <div class="score-card speed"><div class="card-label">⚡ 타수(CPM)</div><div class="card-value">${r.cpm}</div><div class="card-sub">총 ${r.typedLen}자 / ${(r.elapsedSec/60).toFixed(1)}분</div></div>
+    <div class="score-card spacing"><div class="card-label">📐 띄어쓰기</div><div class="card-value">${r.spacingAcc}%</div><div class="card-sub">${r.spaceCorrect}/${r.spaceTotal}개 일치</div></div>
+    <div class="score-card typo"><div class="card-label">❌ 오탈자</div><div class="card-value">${r.typoCount}</div><div class="card-sub">오탈자 비율 ${r.origLen > 0 ? Math.round(r.typoCount/r.origLen*100) : 0}%</div></div>
+  </div>`;
+  body += `<div style="margin-bottom:20px;">
+    <div class="score-bar-item"><span class="score-bar-label">정확도(40)</span><div class="score-bar-track"><div class="score-bar-fill" style="width:${r.scoreAccuracy/40*100}%; background:linear-gradient(90deg,#059669,#34d399);">${r.scoreAccuracy}</div></div></div>
+    <div class="score-bar-item"><span class="score-bar-label">타수(30)</span><div class="score-bar-track"><div class="score-bar-fill" style="width:${r.scoreSpeed/30*100}%; background:linear-gradient(90deg,#2563eb,#60a5fa);">${r.scoreSpeed}</div></div></div>
+    <div class="score-bar-item"><span class="score-bar-label">띄어쓰기(20)</span><div class="score-bar-track"><div class="score-bar-fill" style="width:${r.scoreSpacing/20*100}%; background:linear-gradient(90deg,#d97706,#fbbf24);">${r.scoreSpacing}</div></div></div>
+    <div class="score-bar-item"><span class="score-bar-label">완성도(10)</span><div class="score-bar-track"><div class="score-bar-fill" style="width:${r.scoreComplete/10*100}%; background:linear-gradient(90deg,#7c3aed,#a78bfa);">${r.scoreComplete}</div></div></div>
+  </div>`;
+  if (r.typed) {
+    const ops = diffChars(original, r.typed);
+    let comp = '';
+    ops.forEach(op => {
+      const ch = op.ch === '\n' ? '<br>' : (op.ch === ' ' ? '&nbsp;' : escapeHtml(op.ch));
+      if (op.type === 'match') comp += `<span class="char-correct">${ch}</span>`;
+      else if (op.type === 'extra') comp += `<span class="char-extra">${ch}</span>`;
+      else comp += `<span class="char-missing">${ch}</span>`;
+    });
+    body += `<div style="margin-top:8px;"><h4 style="font-size:13px; margin-bottom:8px;">🔍 오류 비교</h4>
+    <div class="comparison-section">${comp}</div>
+    <div style="margin-top:6px; font-size:11px; color:var(--text-light);">
+      <span class="char-correct">■</span> 정확 &nbsp;
+      <span class="char-missing">■</span> 누락 &nbsp;
+      <span class="char-extra">■</span> 초과입력
+    </div></div>`;
+  }
+
+  document.getElementById('detailModalBody').innerHTML = body;
+  document.getElementById('detailModal').classList.add('show');
+}
+
+function escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function closeDetailModal() {
+  document.getElementById('detailModal').classList.remove('show');
+}
+
+function printDetail() { window.print(); }
+
+// ===================== CSV EXPORT =====================
+function exportCSV() {
+  const results = JSON.parse(localStorage.getItem(STORAGE_KEY_RESULTS) || '[]');
+  if (results.length === 0) { alert('내보낼 데이터가 없습니다.'); return; }
+
+  let csv = '\uFEFF순위,학년,반,번호,이름,총점,등급,정확도(%),타수(CPM),띄어쓰기(%),완성도(%),소요시간(초)\n';
+  const sorted = [...results].sort((a, b) => b.totalScore - a.totalScore);
+  sorted.forEach((r, i) => {
+    csv += `${i+1},${r.studentGrade},${r.studentClass},${r.studentNumber},${r.studentName},${r.totalScore},${r.grade},${r.accuracy},${r.cpm},${r.spacingAcc},${r.completeness},${r.elapsedSec}\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '타자시험결과_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===================== CLEAR =====================
+function showClearConfirm() { document.getElementById('clearConfirm').classList.add('show'); }
+function hideClearConfirm() { document.getElementById('clearConfirm').classList.remove('show'); }
+function clearAllResults() {
+  localStorage.removeItem(STORAGE_KEY_RESULTS);
+  hideClearConfirm();
+  refreshDashboard();
+}
+
+// ===================== INIT =====================
+if (!localStorage.getItem(STORAGE_KEY_SETTINGS)) {
+  localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify({
+    timeMin: 5,
+    title: '애국가',
+    text: PRESETS.aegukga.text
+  }));
+}
+</script>
+</body>
+</html>
